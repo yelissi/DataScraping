@@ -1,0 +1,17 @@
+{
+  "name": "test1",
+  "version": "0.1.0",
+  "description": "analyses an html file (train tickets) & generates a json file in a specific data form",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "y@ssir",
+  "license": "ISC",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.3",
+    "cheerio-tableparser": "^1.0.1",
+    "node-html-parser": "^1.1.15",
+    "number-digit": "^1.0.6"
+  }
+}
