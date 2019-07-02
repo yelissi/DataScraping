@@ -1249,6 +1249,7 @@ const $ = cheerio.load(`<!doctype html>\r\n<html>\r\n
             src=\"http://stats.voyages-sncf.com/b/ss/voyagessncfcommailprod/1/H.21--NS/s45440070862693?%5BAQB%5D&amp;ndh=1&amp;ns=voyagessncf&amp;pageName=MailConfLoisir&amp;cc=EUR&amp;ch=Loisir&amp;c1=Train&amp;c2=VenteTrain&amp;c3=Mail&amp;c4=Train%3AMail&amp;c5=Train&amp;c6=Train%3AMail&amp;h1=VSC%2CLoisir%2CTrain%2CVenteTrain%2CMailConfLoisir\">
             \r\n </div> \r\n </body>\r\n </html>`);
 
+// main variables
 
 let testResult = {};
 let result = {};
@@ -1257,20 +1258,56 @@ let custom = {};
 let objectTrips = {};
 trips[0] = objectTrips;
 
-let formatPassengers = function (passenger) {
+// function that formates the date
+
+let formateDate = objectDate => {
+    let myDate = new Date(objectDate);
+
+    let month = minInt(myDate.getMonth() + 1, 2);
+    let days = minInt(myDate.getDate(), 2);
+    let hours = minInt(myDate.getHours(), 2);
+    let minutes = minInt(myDate.getMinutes(), 2);
+    let seconds = minInt(myDate.getSeconds(), 2);
+    let mSeconds = minInt(myDate.getMilliseconds(), 3) + 'Z'
+
+    var dateFormated = year + '-' + month + '-' + days + ' ' + hours + ':' + minutes + ':' + seconds + '.' + mSeconds;
+
+    return dateFormated;
+}
+
+// function that formates the passenger variable
+
+let formatPassengers = passenger => {
     var result = passenger.replace('<strong>1e&#xA0;passager</strong> <br>', ' ').trim().replace('&#xE0;', 'à');
     if (result === '<strong>2e&#xA0;passager</strong> <br>(26 à 59 ans)') {
         result = passenger.replace('<strong>2e&#xA0;passager</strong> <br>', ' ').trim().replace('&#xE0;', 'à')
     };
     return result;
-}
+};
+
+// function that returns booking type
+
+let bookingType = booking => {
+    let remboursable = `Billet &#xE9;changeable`;
+    let val = booking.search(remboursable);
+    if (val == -1) {
+        val = 'non échangeable';
+    } else {
+        val = 'échangeable';
+    }
+    return val;
+};
+
+//cheking the statut of command
 
 var statut = $('#intro-title').text();
 if (statut = `Confirmation de votre
 commande`) {
     statut = 'ok';
 };
-//
+
+
+
 testResult.statut = statut;
 testResult.result = result;
 testResult.result.trips = trips;
@@ -1284,12 +1321,15 @@ objectTrips.code = code;
 objectTrips.name = name;
 
 //objet details
+
 let details = {};
 objectTrips.details = details;
 testResult.result.trips.details = details;
 let price = parseFloat($('.very-important').text().replace(',', '.'));
 details.price = price;
+
 //table roundTrips
+
 cheerioTableparser($);
 let objectOneRT = {};
 let objectTwoRT = {};
@@ -1309,30 +1349,8 @@ let dateRef = $('.date-validity-content').text();
 let year = new Date(dateRef).getFullYear();
 
 
-let bookingType = booking => {
-    let remboursable = `Billet &#xE9;changeable`;
-    let val = booking.search(remboursable);
-    if (val == -1) {
-        val = 'non échangeable';
-    } else {
-        val = 'échangeable';
-    }
-    return val;
-}
-let formateDate = objectDate => {
-    let myDate = new Date(objectDate);
 
-    let month = minInt(myDate.getMonth() + 1, 2);
-    let days = minInt(myDate.getDate(), 2);
-    let hours = minInt(myDate.getHours(), 2);
-    let minutes = minInt(myDate.getMinutes(), 2);
-    let seconds = minInt(myDate.getSeconds(), 2);
-    let mSeconds = minInt(myDate.getMilliseconds(), 3) + 'Z'
 
-    var dateFormated = year + '-' + month + '-' + days + ' ' + hours + ':' + minutes + ':' + seconds + '.' + mSeconds;
-
-    return dateFormated;
-}
 var x = formateDate('30 juin 2016');
 
 objectOneRT.date = formateDate(date[0]);
@@ -1349,7 +1367,9 @@ objectOneRT.trains[0] = {};
 objectTwoRT.trains[0] = {};
 objectThreeRT.trains[0] = {};
 objectFourRT.trains[0] = {};
+
 //fist object of roundTrips
+
 objectOneRT.trains[0].departureTime = rawRoundTrips[1][0].trim().replace('h', ':');
 objectOneRT.trains[0].departureStation = rawRoundTrips[2][0].trim();
 objectOneRT.trains[0].arrivalTime = rawRoundTrips[1][1].trim().replace('h', ':');
@@ -1408,13 +1428,13 @@ let secondElementPassengers = {};
 secondElementPassengers.type = bookingType(bookingTwo);
 secondElementPassengers.age = formatPassengers(myTablePassengersFour[2]);
 objectFourRT.trains[0].passengers[1] = secondElementPassengers;
-// insert age in secondElementPassengers
+
 
 let thirdElementPassengers = {};
 thirdElementPassengers.type = bookingType(bookingThree);
 thirdElementPassengers.age = formatPassengers(myTablePassengersThree[0]);
 objectFourRT.trains[0].passengers[2] = thirdElementPassengers;
-//
+
 
 let fourthElementPassengers = {};
 fourthElementPassengers.type = bookingType(bookingfour);
@@ -1445,8 +1465,12 @@ custom.prices[2].value = amountThree;
 
 
 
-// make it a json
+// make the "golobal" object a json
+
 let myResult = JSON.stringify(testResult);
+
+//writing the file test-result2.json
+
 fs.writeFile('test-result2.json', myResult, (err) => {
     if (err) throw err;
     console.log(`The file "test-result2.json" has been created & saved!`);
